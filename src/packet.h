@@ -1,19 +1,26 @@
+#ifndef PACKET_H
+#define PACKET_H
 
-#define bool            int
+#include <stdint.h>
+#include <time.h>
+
 #define ZCH_MAXTAGSIZE  16
 
-typedef enum
+typedef int bool;
+
+enum
 {
   false = 0,
   true
-} bool;
+};
 
 typedef struct
 {
   uint32_t id;
-  char     tag[ZCH_MAX_TAGSIZE];
-  uint8_t  prio;
+  char     tag[ZCH_MAXTAGSIZE];
+  uint8_t  priority;
   uint16_t size;
+  long     timestamp;
   uint8_t *data;
 } packet_t;
 
@@ -24,11 +31,4 @@ enum
   prioAny = -3
 };
 
-
-typedef struct
-{
-  // thread arguments?
-  // time variable?
-  
-} producer_t;
-
+#endif
