@@ -8,6 +8,7 @@
 //TODO: we never set a max size limit for the stack or check. We could with
 //count
 
+#ifdef NOPE
 /* Returns a head pointer. Caller must manage the head ptr to a stack. */
 stack_node_t* stack_init(void)
 {
@@ -19,6 +20,7 @@ stack_node_t* stack_init(void)
 
   return head;
 }
+#endif
 
 /* Iterates through the stack and places the packet in the appropriate spot
  * according to 1) priority 2) timestamp. Returns false if head pointer is
@@ -35,10 +37,17 @@ bool stack_queue(stack_node_t **head, packet_t const *new_packet)
   stack_node_t* current;
   int           count = 0;
 
+  /* Create a new 'stack' if one doesn't exist */
   if (*head == NULL) 
-    return false;
+  {
+     *head        = (stack_node_t* )malloc(sizeof(stack_node_t));
+    (*head)->next = NULL;
+
+    memcpy(&(*head)->packet, new_packet, sizeof(packet_t); 
+    return true;
+  }
   
-  new = (stack_node_t * )malloc(sizeof(stack_node_t));
+  new = (stack_node_t* )malloc(sizeof(stack_node_t));
 
   /* Use copy of head pointer to iterate through list */
   current = *head;
@@ -124,8 +133,7 @@ bool stack_pull_head(stack_node_t **head, packet_t *packet)
 
 bool stack_pull_tail(stack_node_t *current, packet_t *packet)
 {
-  stack_node_t* previous;
-  int           count = 0;
+  stack_node_t* previous = NULL;
 
   if (current == NULL)
     return false;
@@ -140,13 +148,9 @@ bool stack_pull_tail(stack_node_t *current, packet_t *packet)
   /* We found the tail */
   memcpy(packet, &current->packet, sizeof(packet_t));  
 
-  /* Must preserve the head */
-  if (count == 0)
-  {
-
-  }
-
-  previous->next = NULL;
+  /* If previous is NULL, then we are popping the head */
+  if (previous != NULL)
+    previous->next = NULL;
 
   free(current);
   return true;
@@ -154,7 +158,37 @@ bool stack_pull_tail(stack_node_t *current, packet_t *packet)
 
 bool stack_priority_pull(stack_node_t *current, packet_t *packet, uint8_t prio)
 {
+  stack_node_t* previous = NULL;
 
+  if (current == NULL)
+    return false;
+
+  /* We start at the head, looking for matching priority */
+  while (current != NULL) 
+  {
+    /* Look for a node priority less than or equal to the priority we were given.
+     * Or check to see if we are at the tail (the case where a priority we
+     * were given is lower than the priority of the tail node).
+     */
+
+    if ( (prio >= current->packet.priority) || (current->next == NULL) )
+    {
+      memcpy(packet, &current->packet, sizeof(packet_t)); 
+
+      /* If previous is NULL, then we are popping the head */
+      if (previous != NULL)
+        previous->next = NULL;
+
+      free (current);
+      break;
+    }
+
+    /* Else go to next node */
+    previous = current;
+    current  = current->next;
+  }
+ 
+  return true;
 }
 
 
