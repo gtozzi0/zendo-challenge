@@ -1,61 +1,26 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <malloc.h>
 #include <pthread.h>
-#include <semaphore.h>
+#include "procon.h"
 
+//TODO: another approach would be to buffer incoming data from producers at the
+//stack layer. The stack thread would handle atomically sorting out data
+//periodically. This way, mutexs would only need be handled by the stack. The
+//consumer thread would still need to use mutex though...
 
-static pthread_mutex_t stack_mutex = PTHREAD_MUTEX_INITIALIZER;
-static sem_t           stack_queue_cnt;
-
-void init_stack_queue(void)
+int main(void)
 {
-  //initialize queue
-  
-  sem_init(&stack_queue_cnt, 0 , 0);
+  /* Init stack */
+  init_stack_queue();
+
+  /* Create some threads */
+  pthread_t producer_thread_0;
+  pthread_t consumer_thread_0;
+
+  pthread_create(&producer_thread_0, NULL, &producerTask, NULL); 
+  pthread_create(&consumer_thread_0, NULL, &consumerTask, NULL);
+
+  while(1);
+
+  return 0;
 }
-
-/* Consumer Thread */
-void* consumerTask(void* arg)
-{
-  while(1)
-  {
-    /* Block and wait for queue entry. If the cnt is at 0, we wait cause it's
-     * empty. Once it goes positive, decrement the cnt and process.
-     */
-    sem_wait(&stack_queue_cnt);
-  
-    /* Lock down the stack */
-    pthread_mutex_lock(&stack_mutex);
-
-    //TODO: pop off a message
-    
-    /* Unlock the stack */
-    pthread_mutex_unlock(&stack_mutex);
-
-    //TODO: process the job
-    //TODO: free() to clean up?? 
-  }
-  return NULL;
-}
-
-
-void* producerTask(void* arg)
-{
-  while (1)
-  {
-    //create a message
-
-    /* Lock down the stack */
-    pthread_mutex_lock(&stack_mutex);
-    
-    //TODO: queue the message into the stack
-
-    /* Increment the semaphore indicating another item in queue */ 
-    sem_post(&stack_queue_cnt);
-
-    /* Unlock the stack */
-    pthread_mutex_unlock(&stack_mutex);
-  }
-}
-
