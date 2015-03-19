@@ -14,6 +14,16 @@ enum
   true
 };
 
+typedef struct
+{
+  uint32_t id;
+  char     tag[ZCH_MAXTAGSIZE];
+  uint8_t  priority;
+  uint16_t size;
+  long     timestamp;
+  uint8_t *data;
+} packet_t;
+
 //TODO: why cant i use the typedef in the structure
 typedef struct stack_node
 {
@@ -29,16 +39,6 @@ typedef struct
   mutex         stack_mutex;
 }
 */
-
-typedef struct
-{
-  uint32_t id;
-  char     tag[ZCH_MAXTAGSIZE];
-  uint8_t  priority;
-  uint16_t size;
-  long     timestamp;
-  uint8_t *data;
-} packet_t;
 
 enum
 {

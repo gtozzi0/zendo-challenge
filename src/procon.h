@@ -1,7 +1,6 @@
 #ifndef PROCON_H
 #define PROCON_H
 
-#include "packet.h"   //TODO: need to move bool out of here
 #include "stack.h"
 
 void  init_stack_queue(void);
