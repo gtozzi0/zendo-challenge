@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <string.h>
 #include "stack.h"
-#include "packet.h"
 
 #ifdef STACK_TEST
 #include <stdio.h>
