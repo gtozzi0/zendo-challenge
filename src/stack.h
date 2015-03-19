@@ -31,6 +31,12 @@ typedef struct stack_node
   struct stack_node *next;
 } stack_node_t;
 
+/* Prototypes */
+bool stack_queue(stack_node_t **, packet_t *);
+bool stack_pull_head(stack_node_t **, packet_t *);
+bool stack_pull_tail(stack_node_t **, packet_t *);
+bool stack_priority_pull(stack_node_t **, packet_t *, uint8_t);
+
 /*
 typedef struct
 {

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 #include "procon.h"
 
 //TODO: another approach would be to buffer incoming data from producers at the
@@ -18,6 +19,7 @@ int main(void)
   pthread_t consumer_thread_0;
 
   pthread_create(&producer_thread_0, NULL, &producerTask, NULL); 
+  usleep(3000000);    // delay 3 sec before consumer starts
   pthread_create(&consumer_thread_0, NULL, &consumerTask, NULL);
 
   while(1);

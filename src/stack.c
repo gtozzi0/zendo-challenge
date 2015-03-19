@@ -8,6 +8,10 @@
 #include "basic_time.h"
 #endif
 
+#ifdef STACK_DEBUG
+#include <stdio.h>
+#endif
+
 //TODO: maybe define bool and enum true false in seperate header
 
 /* 
@@ -138,7 +142,12 @@ bool stack_pull_head(stack_node_t **head, packet_t *packet)
   current = *head;
 
   if (current == NULL) 
+  {
+#ifdef STACK_DEBUG
+    printf("head was null!\n");
+#endif
     return false;
+  }
 
   //if (*head == NULL) 
     //return false;
@@ -163,7 +172,12 @@ bool stack_pull_tail(stack_node_t **head, packet_t *packet)
   current = *head;
 
   if (current == NULL)
+  {
+#ifdef STACK_DEBUG
+    printf("head was null!\n");
+#endif
     return false;
+  }
 
   /* We start at the head, looking for the tail */
   while (current->next != NULL)
@@ -195,7 +209,12 @@ bool stack_priority_pull(stack_node_t **head, packet_t *packet, uint8_t prio)
   current = *head;
 
   if (current == NULL)
+  {
+#ifdef STACK_DEBUG
+    printf("head was null!\n");
+#endif
     return false;
+  }
 
   /* We start at the head, looking for matching priority */
   while (current != NULL) 
