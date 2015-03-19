@@ -10,17 +10,23 @@
 #endif
 
 //TODO: maybe define bool and enum true false in seperate header
-//TODO: Dequeueing the lowest priority could be faster with doubly linked list
 
-//TODO: we never set a max size limit for the stack or check. We could with
-//count
+/* 
+ * Note: Dequeueing the lowest priorirty node could be faster by keeping track
+ * of the tail node. 
+ */
+
+/* 
+ * Note: we never set a max size limit for the stack or check. We could return a
+ * false on a queue request based on a count of nodes.
+ */
 
 /* Iterates through the stack and places the packet in the appropriate spot
  * according to 1) priority 2) timestamp. Returns false if head pointer is
  * invalid. Returns true on successful insertion. We keep track of the current
- * node and previous node for insertion before and after current. The head
- * address may need to be modified in here, so we require a pointer to the head
- * pointer.
+ * node and previous node for insertion before and after current. If a stack
+ * needs to be initialized. The caller just needs to send a packet_t* pointing
+ * to NULL. This queue call will handle the rest.
  */
 //TODO: note the const new packet since we do not want to edit the packet data
 //bool stack_queue(stack_node_t **head, packet_t const *new_packet)
@@ -200,19 +206,31 @@ bool stack_priority_pull(stack_node_t **head, packet_t *packet, uint8_t prio)
      * were given is lower than the priority of the tail node).
      */
 
+      /* We need logic for popping head, tail, and something in between */
     if ( (prio >= current->packet.priority) || (current->next == NULL) )
     {
       memcpy(packet, &current->packet, sizeof(packet_t)); 
 
-      /* If previous is NULL, then we are popping the head */
-      if (previous != NULL)
+      if (previous == NULL)                // we are at head
+      {
+        if (current->next == NULL)         // and head is also tail
+        {
+          *head = NULL;
+        }
+        else                               // there is at least one more node
+        {
+          *head = current->next;
+        }
+      }
+      else if (current->next == NULL)      // we are at tail
+      {
         previous->next = NULL;
-
-      /*
-        //TODO: this needs to be somewhere...
-        previous->next = current->next;
-      */
-
+      }
+      else                                 // pull from between two nodes
+      {
+        previous->next = current->next;           
+      }
+        
       free (current);
       break;
     }
@@ -303,7 +321,7 @@ int main(void)
 
   /* Test 5: Queue a bunch of packets and head pull them all */
 
-  for (i = 0; i < 100; i++)
+  for (i = 0; i < 30; i++)
   {
     fill_packet(&queue_packet);
 
@@ -321,11 +339,12 @@ int main(void)
   }
 
   /* This is where we need a semaphore to signal consumer to keep pulling */
-  for (i = 0; i < 100; i++)
+  for (i = 0; i < 30; i++)
   {
-    if(!stack_pull_head(&stackHead, &dequeue_packet))
+    if(!stack_priority_pull(&stackHead, &dequeue_packet, (uint8_t )rand()) )
       printf("Failed iteration %d head pop\n", i);
   
+    printf("iteration %d\n", i);
     printf("***POP***\n");
     printf("Packet id: %u\n", dequeue_packet.id);
     printf("Packet prio: %u\n", dequeue_packet.priority);
@@ -333,7 +352,7 @@ int main(void)
     printf("Packet timestamp: %ld\n", dequeue_packet.timestamp);
     printf("\n\n");
   }
-    
+
 
   return 0;
 }
