@@ -7,7 +7,6 @@
 #define ZCH_MAXTAGSIZE  16
 
 typedef int bool;
-
 enum
 {
   false = 0,
@@ -31,6 +30,13 @@ typedef struct stack_node
   struct stack_node *next;
 } stack_node_t;
 
+enum
+{
+  prioMin = -1,
+  prioMax = -2,
+  prioAny = -3
+};
+
 /* Prototypes */
 bool stack_queue(stack_node_t **, packet_t *);
 bool stack_pull_head(stack_node_t **, packet_t *);
@@ -45,12 +51,5 @@ typedef struct
   mutex         stack_mutex;
 }
 */
-
-enum
-{
-  prioMin = -1,
-  prioMax = -2,
-  prioAny = -3
-};
 
 #endif

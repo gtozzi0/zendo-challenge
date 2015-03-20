@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include "stack.h"
 #include "basic_time.h"
+#include "procon.h"
 
 /* Global variables */
 static stack_node_t *stack         = NULL;
@@ -30,7 +31,6 @@ void* consumerTask(void* unused)
   packet_t     packet;
   int          rand_prio;
   unsigned int usecs;
-  bool         rv;
 
   while(1)
   {
@@ -69,28 +69,20 @@ void* consumerTask(void* unused)
     /* Lock down the stack */
     pthread_mutex_lock(&stack_mutex);
 
-    if(!consumerGet(&stack, &packet, rand_prio))
-    {
+    if (!consumerGet(&stack, &packet, rand_prio))
       printf("Consumer thread X failed to get a packet!\n");
-      rv = false;
-    }
-    else
-      rv = true;
 
     /* Unlock the stack */
     pthread_mutex_unlock(&stack_mutex);
 
-    //TODO: we should never even get here if a packet wasn't ready!
-    //if (rv)
-      process_packet(&packet);
+    process_packet(&packet);
   }
   return NULL;
 }
 
 static void process_packet(packet_t *packet)
 {
-  int i, j;
-  int cnt           = 0;
+  int i;
   uint8_t *data_ptr = NULL;
 
   //TODO: print tag that tells which thread it came from
@@ -189,7 +181,7 @@ bool consumerGet(stack_node_t **head, packet_t *packet, int priority)
 
   if (priority == prioAny || priority == prioMax)
   {
-    if (!stack_pull_head(head, packet));
+    if (!stack_pull_head(head, packet))
     {
 #ifdef CON_DEBUG
     printf("BAD HEAD PULL\n");
@@ -200,7 +192,7 @@ bool consumerGet(stack_node_t **head, packet_t *packet, int priority)
   else if (priority >= 0)
   {
     //TODO
-    if (!stack_priority_pull(head, packet, priority));
+    if (!stack_priority_pull(head, packet, priority))
     {
 #ifdef CON_DEBUG
     printf("BAD PRIO PULL\n");
@@ -210,7 +202,7 @@ bool consumerGet(stack_node_t **head, packet_t *packet, int priority)
   }
   else  //prioMin
   {
-    if (!stack_pull_tail(head, packet));
+    if (!stack_pull_tail(head, packet))
     {
 #ifdef CON_DEBUG
     printf("BAD TAIL PULL\n");
