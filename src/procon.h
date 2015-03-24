@@ -2,6 +2,7 @@
 #define PROCON_H
 
 #include "stack.h"
+#include "my_bool.h"
 
 void  init_stack_queue(void);
 void* consumerTask(void* );

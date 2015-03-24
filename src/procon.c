@@ -8,6 +8,9 @@
 #include "stack.h"
 #include "basic_time.h"
 #include "procon.h"
+#include "my_bool.h"
+
+//TODO: seed rand with time
 
 /* Global variables */
 static stack_node_t *stack         = NULL;
@@ -15,9 +18,15 @@ static pthread_mutex_t stack_mutex = PTHREAD_MUTEX_INITIALIZER;
 static sem_t           stack_queue_cnt;
 
 /* Private Functions */
-static void process_packet(packet_t *);
+static void     fill_packet(packet_t*);
+static void     process_packet(packet_t*);
 static uint32_t get_id(void);
+static int      get_rand_stack_prio(void);
 
+//TODO TODO TODO
+//Does each producer get its own counter? Or do they all pull from the same
+//counter? If they each get their own, I think we can put static id variable
+//in the producerTask, and that gives each instance its own id counter
 
 void init_stack_queue(void)
 {
@@ -25,11 +34,59 @@ void init_stack_queue(void)
   sem_init(&stack_queue_cnt, 0 , 0);
 }
 
+static void fill_packet(packet_t* packet)
+{
+  int      i;
+  uint8_t *data_ptr;
+
+  //TODO: packet.tag = ?
+  packet->priority  = (uint8_t ) rand();
+  packet->size      = 0x0000003F & (uint32_t )rand();
+  packet->data      = malloc(sizeof(uint8_t) * packet->size);
+  packet->timestamp = get_ms_timestamp();
+  packet->id        = get_id(); 
+
+  data_ptr = packet->data;
+
+  for (i = 0; i < packet->size; i++)
+  {
+    *data_ptr = (uint8_t )rand();
+    ++data_ptr;
+  }
+}
+
+static int get_rand_stack_prio(void)
+{
+  int priority;
+
+  priority = (uint32_t )(rand() & 0x00000003);
+
+  switch (priority)
+  {
+    case 0:
+      priority = (uint8_t )rand(); 
+      break;
+    case 1:
+      priority = prioAny;
+      break;
+    case 2:
+      priority = prioMax;
+      break;
+    case 3:
+      priority = prioMin;
+      break;
+    default:
+      priority = prioAny;
+      break;
+  }
+  return (priority);
+}
+
 /* Consumer Thread */
 void* consumerTask(void* unused)
 {
   packet_t     packet;
-  int          rand_prio;
+  int          priority;
   unsigned int usecs;
 
   while(1)
@@ -38,24 +95,8 @@ void* consumerTask(void* unused)
     usecs = (unsigned int )(rand() & 0x000FFFFF);
     usleep(usecs);
 
-    //TODO: seed rand with time
     /* Get a random priority from values -3,-2,-1,0-255 */
-    rand_prio = (uint32_t )(rand() & 0x00000003);
-    switch (rand_prio)
-    {
-      case 0:
-        rand_prio = (uint8_t )rand(); 
-        break;
-      case 1:
-        rand_prio = prioAny;
-        break;
-      case 2:
-        rand_prio = prioMax;
-        break;
-      case 3:
-        rand_prio = prioMin;
-        break;
-    }
+    priority = get_rand_stack_prio();
 
     /* Block and wait for queue entry. If the cnt is at 0, we wait cause it's
      * empty. Once it goes positive, decrement the cnt and process.
@@ -69,7 +110,7 @@ void* consumerTask(void* unused)
     /* Lock down the stack */
     pthread_mutex_lock(&stack_mutex);
 
-    if (!consumerGet(&stack, &packet, rand_prio))
+    if (!consumerGet(&stack, &packet, priority))
       printf("Consumer thread X failed to get a packet!\n");
 
     /* Unlock the stack */
@@ -114,9 +155,6 @@ void* producerTask(void* unused)
 {
   packet_t packet;
   unsigned int usecs;
-  int      i;
-  uint8_t *data_ptr;
-
 
   while (1)
   {
@@ -128,26 +166,11 @@ void* producerTask(void* unused)
     printf("Producer Thread is producing!\n");
 #endif
 
-    /* Generate a message */
-    //TODO: packet.tag = ?
-    packet.priority  = (uint8_t ) rand();
-    packet.size      = 0x0000003F & (uint32_t )rand();
-    packet.data      = malloc(sizeof(uint8_t) * packet.size);
-    packet.timestamp = get_ms_timestamp();
-
-    data_ptr = packet.data;
-
-    for (i = 0; i < packet.size; i++)
-    {
-      *data_ptr = (uint8_t )rand();
-      ++data_ptr;
-    }
-
     /* Lock down the stack */
     pthread_mutex_lock(&stack_mutex);
     
-    /* Atomically grab the ID */
-    packet.id        = get_id(); 
+    /* Atomically fill a packet. Namely to atomically grab from the ID counter */
+    fill_packet(&packet);
 
     if(!stack_queue(&stack, &packet))
       printf("Producer thread X failed to queue a message!\n");
@@ -191,7 +214,6 @@ bool consumerGet(stack_node_t **head, packet_t *packet, int priority)
   }
   else if (priority >= 0)
   {
-    //TODO
     if (!stack_priority_pull(head, packet, priority))
     {
 #ifdef CON_DEBUG

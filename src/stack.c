@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "stack.h"
+#include "my_bool.h"
 
 #ifdef STACK_TEST
 #include <stdio.h>
@@ -11,8 +12,6 @@
 #ifdef STACK_DEBUG
 #include <stdio.h>
 #endif
-
-//TODO: maybe define bool and enum true false in seperate header
 
 /* 
  * Note: Dequeueing the lowest priorirty node could be faster by keeping track
@@ -70,7 +69,6 @@ bool stack_queue(stack_node_t **head, packet_t *new_packet)
       printf("We are at higher prio spot\n");
 #endif
 
-      //TODO: notes on this below
       memcpy(&new->packet, new_packet, sizeof(packet_t));
 
       /* Check if at head position */
@@ -261,6 +259,7 @@ bool stack_priority_pull(stack_node_t **head, packet_t *packet, uint8_t prio)
   return true;
 }
 
+//TODO: move this to a differnt file...
 #ifdef STACK_TEST
 void fill_packet(packet_t *packet)
 {

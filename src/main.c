@@ -19,10 +19,11 @@ int main(void)
   pthread_t consumer_thread_0;
 
   pthread_create(&producer_thread_0, NULL, &producerTask, NULL); 
-  usleep(3000000);    // delay 3 sec before consumer starts
+  usleep(5000000);    // delay 3 sec before consumer starts
   pthread_create(&consumer_thread_0, NULL, &consumerTask, NULL);
 
   while(1);
 
   return 0;
 }
+

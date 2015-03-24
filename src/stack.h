@@ -3,15 +3,9 @@
 
 #include <stdint.h>
 #include <time.h>
+#include "my_bool.h"
 
 #define ZCH_MAXTAGSIZE  16
-
-typedef int bool;
-enum
-{
-  false = 0,
-  true
-};
 
 typedef struct
 {
@@ -30,6 +24,15 @@ typedef struct stack_node
   struct stack_node *next;
 } stack_node_t;
 
+/*
+typedef struct
+{
+  pthread_mutex_t    queue_mutex;
+  sem_t              queue_cnt;
+  struct stack_node* head;
+} stack_t;
+*/
+
 enum
 {
   prioMin = -1,
@@ -42,14 +45,5 @@ bool stack_queue(stack_node_t **, packet_t *);
 bool stack_pull_head(stack_node_t **, packet_t *);
 bool stack_pull_tail(stack_node_t **, packet_t *);
 bool stack_priority_pull(stack_node_t **, packet_t *, uint8_t);
-
-/*
-typedef struct
-{
-  stack_node_t* stack;
-  semaphore     full_count;
-  mutex         stack_mutex;
-}
-*/
 
 #endif
