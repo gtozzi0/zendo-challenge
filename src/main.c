@@ -12,15 +12,17 @@
 int main(void)
 {
   /* Init stack */
-  init_stack_queue();
+  stack_t stack_0;
+  init_stack_queue(&stack_0);
 
   /* Create some threads */
   pthread_t producer_thread_0;
   pthread_t consumer_thread_0;
 
-  pthread_create(&producer_thread_0, NULL, &producerTask, NULL); 
-  usleep(5000000);    // delay 3 sec before consumer starts
-  pthread_create(&consumer_thread_0, NULL, &consumerTask, NULL);
+  /* Pass in the stack_t structure to the threads */
+  pthread_create(&producer_thread_0, NULL, &producerTask, &stack_0); 
+  usleep(5000000);    // delay before consumer starts
+  pthread_create(&consumer_thread_0, NULL, &consumerTask, &stack_0);
 
   while(1);
 

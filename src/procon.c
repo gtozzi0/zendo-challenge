@@ -12,11 +12,6 @@
 
 //TODO: seed rand with time
 
-/* Global variables */
-static stack_node_t *stack         = NULL;
-static pthread_mutex_t stack_mutex = PTHREAD_MUTEX_INITIALIZER;
-static sem_t           stack_queue_cnt;
-
 /* Private Functions */
 static void     fill_packet(packet_t*);
 static void     process_packet(packet_t*);
@@ -28,19 +23,21 @@ static int      get_rand_stack_prio(void);
 //counter? If they each get their own, I think we can put static id variable
 //in the producerTask, and that gives each instance its own id counter
 
-void init_stack_queue(void)
+void init_stack_queue(stack_t* stack)
 {
   /* Init the semaphore. Stack head is auto-init. */
-  sem_init(&stack_queue_cnt, 0 , 0);
+  sem_init(&stack->queue_cnt, 0, 0);
+  /* Initialize mutex with default attributes */
+  pthread_mutex_init(&stack->queue_mutex, NULL);
 }
 
 static void fill_packet(packet_t* packet)
 {
   int      i;
-  uint8_t *data_ptr;
+  uint8_t* data_ptr;
 
   //TODO: packet.tag = ?
-  packet->priority  = (uint8_t ) rand();
+  packet->priority  = (uint8_t )rand();
   packet->size      = 0x0000003F & (uint32_t )rand();
   packet->data      = malloc(sizeof(uint8_t) * packet->size);
   packet->timestamp = get_ms_timestamp();
@@ -83,8 +80,9 @@ static int get_rand_stack_prio(void)
 }
 
 /* Consumer Thread */
-void* consumerTask(void* unused)
+void* consumerTask(void* stack)
 {
+  stack_t*     stack_ptr = (stack_t* )stack; 
   packet_t     packet;
   int          priority;
   unsigned int usecs;
@@ -101,30 +99,30 @@ void* consumerTask(void* unused)
     /* Block and wait for queue entry. If the cnt is at 0, we wait cause it's
      * empty. Once it goes positive, decrement the cnt and process.
      */
-    sem_wait(&stack_queue_cnt);
+    sem_wait(&stack_ptr->queue_cnt);
   
 #ifdef CON_DEBUG
     printf("Consumer Thread is consuming!\n");
 #endif
 
     /* Lock down the stack */
-    pthread_mutex_lock(&stack_mutex);
+    pthread_mutex_lock(&stack_ptr->queue_mutex);
 
-    if (!consumerGet(&stack, &packet, priority))
+    if (!consumerGet(&stack_ptr->head, &packet, priority))
       printf("Consumer thread X failed to get a packet!\n");
 
     /* Unlock the stack */
-    pthread_mutex_unlock(&stack_mutex);
+    pthread_mutex_unlock(&stack_ptr->queue_mutex);
 
     process_packet(&packet);
   }
   return NULL;
 }
 
-static void process_packet(packet_t *packet)
+static void process_packet(packet_t* packet)
 {
   int i;
-  uint8_t *data_ptr = NULL;
+  uint8_t* data_ptr = NULL;
 
   //TODO: print tag that tells which thread it came from
   printf("Packet id       : %u\n", packet->id);
@@ -151,9 +149,10 @@ static void process_packet(packet_t *packet)
 }
 
 /* Producer Thread */
-void* producerTask(void* unused)
+void* producerTask(void* stack)
 {
-  packet_t packet;
+  stack_t*     stack_ptr = (stack_t* )stack;
+  packet_t     packet;
   unsigned int usecs;
 
   while (1)
@@ -167,19 +166,19 @@ void* producerTask(void* unused)
 #endif
 
     /* Lock down the stack */
-    pthread_mutex_lock(&stack_mutex);
+    pthread_mutex_lock(&stack_ptr->queue_mutex);
     
     /* Atomically fill a packet. Namely to atomically grab from the ID counter */
     fill_packet(&packet);
 
-    if(!stack_queue(&stack, &packet))
+    if(!stack_queue(&stack_ptr->head, &packet))
       printf("Producer thread X failed to queue a message!\n");
 
     /* Increment the semaphore indicating another item in queue */ 
-    sem_post(&stack_queue_cnt);
+    sem_post(&stack_ptr->queue_cnt);
 
     /* Unlock the stack */
-    pthread_mutex_unlock(&stack_mutex);
+    pthread_mutex_unlock(&stack_ptr->queue_mutex);
   }
 }
 

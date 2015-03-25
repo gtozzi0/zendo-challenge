@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <time.h>
+#include <semaphore.h>
 #include "my_bool.h"
 
 #define ZCH_MAXTAGSIZE  16
@@ -21,17 +22,15 @@ typedef struct
 typedef struct stack_node
 {
   packet_t           packet;
-  struct stack_node *next;
+  struct stack_node* next;
 } stack_node_t;
 
-/*
 typedef struct
 {
   pthread_mutex_t    queue_mutex;
   sem_t              queue_cnt;
   struct stack_node* head;
 } stack_t;
-*/
 
 enum
 {
