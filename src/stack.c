@@ -259,7 +259,9 @@ bool stack_priority_pull(stack_node_t **head, packet_t *packet, uint8_t prio)
   return true;
 }
 
-//TODO: move this to a differnt file...
+/* Some quick tests to check basic functionality. Normally, would create a full
+ * unit test package...
+ */
 #ifdef STACK_TEST
 void fill_packet(packet_t *packet)
 {
@@ -283,7 +285,6 @@ int main(void)
   int                  i;
 
 
-#ifdef POOPY
   /* Test 1: check first entry head pop */ 
   fill_packet(&queue_packet);
 
@@ -331,10 +332,9 @@ int main(void)
     printf("Packet size: %u\n", dequeue_packet.size);
     printf("Packet timestamp: %ld\n", dequeue_packet.timestamp);
   }
-#endif
     
   
-  /* Test different priorities at the head.... */
+  /* Test 4: Test different priorities at the head.... */
 
   /* Test 5: Queue a bunch of packets and head pull them all */
 
@@ -355,7 +355,6 @@ int main(void)
       printf("Failed test1 at queue\n");
   }
 
-  /* This is where we need a semaphore to signal consumer to keep pulling */
   for (i = 0; i < 30; i++)
   {
     if(!stack_priority_pull(&stackHead, &dequeue_packet, (uint8_t )rand()) )
