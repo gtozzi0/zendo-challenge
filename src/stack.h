@@ -18,7 +18,6 @@ typedef struct
   uint8_t *data;
 } packet_t;
 
-//TODO: why cant i use the typedef in the structure
 typedef struct stack_node
 {
   packet_t           packet;

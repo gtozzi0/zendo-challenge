@@ -24,13 +24,12 @@ static pthread_mutex_t rand_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 /* Stack Init. The stack automatically detects a NULL head and creates a new
- * stack from it. We only init the mutex and semaphore here.
+ * stack from it. We only init the mutex and semaphore here. Mutex is initalized
+ * with default atrributes.
  */
 void init_stack_queue(stack_t* stack)
 {
-  /* Init the semaphore. Stack head is auto-init. */
   sem_init(&stack->queue_cnt, 0, 0);
-  /* Initialize mutex with default attributes */
   pthread_mutex_init(&stack->queue_mutex, NULL);
 }
 
@@ -137,12 +136,6 @@ void* producerTask(void* stack)
 
     if (!producerPut(&stack_ptr->head, &packet))
       printf("Producer thread X failed to queue a message!\n");
-  
-/*
-TODO
-    if(!stack_queue(&stack_ptr->head, &packet))
-      printf("Producer thread X failed to queue a message!\n");
-*/
 
     /* Increment the semaphore indicating another item in queue */ 
     sem_post(&stack_ptr->queue_cnt);
@@ -274,6 +267,7 @@ static int get_rand_stack_prio(void)
   return (priority);
 }
 
+/* We free malloc'ed data here */
 static void process_packet(packet_t* packet)
 {
   int i;

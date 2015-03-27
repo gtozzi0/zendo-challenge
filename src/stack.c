@@ -30,8 +30,6 @@
  * needs to be initialized. The caller just needs to send a packet_t* pointing
  * to NULL. This queue call will handle the rest.
  */
-//TODO: note the const new packet since we do not want to edit the packet data
-//bool stack_queue(stack_node_t **head, packet_t const *new_packet)
 
 bool stack_queue(stack_node_t **head, packet_t *new_packet)
 {
@@ -147,16 +145,9 @@ bool stack_pull_head(stack_node_t **head, packet_t *packet)
     return false;
   }
 
-  //if (*head == NULL) 
-    //return false;
-
-  //TODO: how do i pass the address of the head packet?
-  //memcpy(packet, &(*head)->packet, sizeof(packet_t)); 
-
   memcpy(packet, &current->packet, sizeof(packet_t)); 
     
   *head = current->next;
-  // or *head = (*head)->current;
 
   free(current);
   return true;

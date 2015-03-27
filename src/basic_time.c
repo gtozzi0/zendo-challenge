@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-/* Note: this doesn't handle rollover for our stack timestamp priorities */
+/* Note: this doesn't handle rollover for our stack timestamp priorities, but
+ * should suffice as an example. */
 
 long get_ms_timestamp(void)
 {
@@ -10,7 +11,6 @@ long get_ms_timestamp(void)
   gettimeofday(&tv, NULL);
 
   return ( (tv.tv_sec * 1000) + (tv.tv_usec / 1000) );
-  //*time_ms = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 }
 
 #ifdef TIME_TEST
@@ -20,7 +20,7 @@ int main(void)
 
   while(1)
   {
-    get_ms_timestamp(&milliseconds);
+    milliseconds = get_ms_timstamp();
     printf("%ld\n", milliseconds);
   }
 
